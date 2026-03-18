@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel do Restaurante</title>
+  <style>
+    :root{
+      --bg:#121212; --card:#1e1e1e; --gold:#d4af37; --text:#fff; --muted:#bdbdbd;
+      --line:#2d2d2d; --green:#16a34a; --red:#ef4444; --blue:#2563eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{padding:20px;background:#181818;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    h1{margin:0;color:var(--gold)}
+    .sub{margin-top:6px;color:var(--muted)}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .tab{padding:10px 14px;border:none;border-radius:10px;background:#2f3540;color:#fff;font-weight:700;cursor:pointer}
+    .tab.active{background:var(--gold);color:#111}
+    .panel{display:none}
+    .panel.active{display:block}
+    .grid{display:grid;gap:14px}
+    .pedido,.box,.produto{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+    .pedido h3,.box h2,.produto h3{margin:0 0 10px;color:var(--gold)}
+    .status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.75rem;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+    .novo{background:#6a5200;color:#fff1b0}
+    .preparo{background:#0c4a6e;color:#d5f3ff}
+    .pronto{background:#14532d;color:#d9ffe6}
+    .entregue{background:#444;color:#eee}
+    .itens{background:#171717;border:1px solid var(--line);padding:10px;border-radius:10px;line-height:1.5;margin:10px 0}
+    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+    input, textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid #444;background:#111;color:#fff}
+    .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+    .btn{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+    .btn-save{background:var(--green);color:#fff}
+    .btn-remove{background:var(--red);color:#fff}
+    .btn-blue{background:var(--blue);color:#fff}
+    .btn-dark{background:#2f3540;color:#fff}
+    .produto-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="tituloRestaurante">Painel do Restaurante</h1>
+    <div class="sub">Pedidos em tempo real e gestão do cardápio</div>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <button class="tab active" data-tab="pedidos">Pedidos</button>
+      <button class="tab" data-tab="produtos">Produtos</button>
+    </div>
+
+    <section id="pedidos" class="panel active">
+      <div id="listaPedidos" class="grid"></div>
+    </section>
+
+    <section id="produtos" class="panel">
+      <div class="box">
+        <h2>Novo produto</h2>
+        <div class="row">
+          <input id="novoNome" placeholder="Nome do produto">
+          <input id="novaCategoria" placeholder="Categoria">
+          <input id="novoPreco" type="number" step="0.01" placeholder="Preço normal">
+          <input id="novoPrecoPromo" type="number" step="0.01" placeholder="Preço promocional">
+          <select id="novaPromoAtiva">
+            <option value="false">Sem promoção</option>
+            <option value="true">Promoção ativa</option>
+          </select>
+          <select id="novoDisponivel">
+            <option value="true">Disponível</option>
+            <option value="false">Indisponível</option>
+          </select>
+          <input id="novaImagem" placeholder="URL da imagem">
+          <input id="novaDescricao" placeholder="Descrição">
+        </div>
+        <div class="actions">
+          <button class="btn btn-save" id="btnAdicionar">Adicionar produto</button>
+          <button class="btn btn-dark" id="btnRecarregar">Recarregar</button>
+        </div>
+      </div>
+
+      <div id="listaProdutos" class="produto-list" style="margin-top:14px;"></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import {
+      getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc,
+      addDoc, getDoc
+    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCOMS_DP1TEsoHQKEI44sM0jsj-7EBms84",
+      authDomain: "restaurante-felipe.firebaseapp.com",
+      projectId: "restaurante-felipe",
+      storageBucket: "restaurante-felipe.firebasestorage.app",
+      messagingSenderId: "917737239535",
+      appId: "1:917737239535:web:decb1cef3b7bd84183fc1a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tituloRestaurante = document.getElementById("tituloRestaurante");
+    const listaPedidos = document.getElementById("listaPedidos");
+    const listaProdutos = document.getElementById("listaProdutos");
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    function formatar(valor){
+      return Number(valor).toFixed(2).replace(".", ",");
+    }
+
+    function formatarData(ts){
+      if (!ts?.seconds) return "Agora";
+      return new Date(ts.seconds * 1000).toLocaleString("pt-BR");
+    }
+
+    async function carregarConfig() {
+      const snap = await getDoc(doc(db, "config", "restaurante"));
+      if (snap.exists()) {
+        const d = snap.data();
+        tituloRestaurante.textContent = d.nome || "Painel do Restaurante";
+      }
+    }
+
+    function classeStatus(status){
+      return status === "novo" ? "novo" :
+             status === "preparo" ? "preparo" :
+             status === "pronto" ? "pronto" : "entregue";
+    }
+
+    function ouvirPedidos(){
+      onSnapshot(collection(db, "pedidos"), snapshot => {
+        const pedidos = [];
+        snapshot.forEach(d => pedidos.push({ id: d.id, ...d.data() }));
+
+        pedidos.sort((a,b) => {
+          const aTime = a.horario?.seconds || 0;
+          const bTime = b.horario?.seconds || 0;
+          return bTime - aTime;
+        });
+
+        listaPedidos.innerHTML = !pedidos.length
+          ? `<div class="pedido">Nenhum pedido ainda.</div>`
+          : pedidos.map(p => `
+            <div class="pedido">
+              <h3>Mesa ${p.mesa}</h3>
+              <div class="status ${classeStatus(p.status)}">${p.status}</div>
+              <div><strong>Horário:</strong> ${formatarData(p.horario)}</div>
+              <div><strong>Total:</strong> R$ ${formatar(p.total || 0)}</div>
+              <div><strong>Observação:</strong> ${p.observacao || "Sem observação"}</div>
+              <div class="itens">
+                ${(p.itens || []).map(i => `• ${i.nome} - R$ ${formatar(i.preco)}`).join("<br>")}
+              </div>
+              <div class="actions">
+                <button class="btn btn-blue" data-status="preparo" data-id="${p.id}">Em preparo</button>
+                <button class="btn btn-save" data-status="pronto" data-id="${p.id}">Pronto</button>
+                <button class="btn btn-dark" data-status="entregue" data-id="${p.id}">Entregue</button>
+                <button class="btn btn-remove" data-remove="${p.id}">Remover</button>
+              </div>
+            </div>
+          `).join("");
+
+        document.querySelectorAll("[data-status]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            await updateDoc(doc(db, "pedidos", btn.dataset.id), { status: btn.dataset.status });
+          });
+        });
+
+        document.querySelectorAll("[data-remove]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            if (confirm("Remover pedido?")) {
+              await deleteDoc(doc(db, "pedidos", btn.dataset.remove));
+            }
+          });
+        });
+      });
+    }
+
+    function ouvirProdutos(){
+      onSnapshot(collection(db, "produtos"), snapshot => {
+        const produtos = [];
+        snapshot.forEach(d => produtos.push({ id: d.id, ...d.data() }));
+
+        listaProdutos.innerHTML = !produtos.length
+          ? `<div class="produto">Nenhum produto cadastrado.</div>`
+          : produtos.map(p => `
+            <div class="produto">
+              <h3>${p.nome}</h3>
+              <div class="row">
+                <input id="nome-${p.id}" value="${p.nome || ""}">
+                <input id="categoria-${p.id}" value="${p.categoria || ""}">
+                <input id="preco-${p.id}" type="number" step="0.01" value="${p.preco ?? 0}">
+                <input id="promo-${p.id}" type="number" step="0.01" value="${p.precoPromocional ?? 0}">
+                <select id="promoAtiva-${p.id}">
+                  <option value="false" ${!p.promocaoAtiva ? "selected" : ""}>Sem promoção</option>
+                  <option value="true" ${p.promocaoAtiva ? "selected" : ""}>Promoção ativa</option>
+                </select>
+                <select id="disponivel-${p.id}">
+                  <option value="true" ${p.disponivel !== false ? "selected" : ""}>Disponível</option>
+                  <option value="false" ${p.disponivel === false ? "selected" : ""}>Indisponível</option>
+                </select>
+                <input id="imagem-${p.id}" value="${p.imagem || ""}" placeholder="URL da imagem">
+                <input id="descricao-${p.id}" value="${p.descricao || ""}" placeholder="Descrição">
+              </div>
+              <div class="actions">
+                <button class="btn btn-save" data-save="${p.id}">Salvar</button>
+                <button class="btn btn-remove" data-delete="${p.id}">Excluir</button>
+              </div>
+            </div>
+          `).join("");
+
+        document.querySelectorAll("[data-save]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const id = btn.dataset.save;
+            await updateDoc(doc(db, "produtos", id), {
+              nome: document.getElementById(`nome-${id}`).value.trim(),
+              categoria: document.getElementById(`categoria-${id}`).value.trim(),
+              preco: Number(document.getElementById(`preco-${id}`).value || 0),
+              precoPromocional: Number(document.getElementById(`promo-${id}`).value || 0),
+              promocaoAtiva: document.getElementById(`promoAtiva-${id}`).value === "true",
+              disponivel: document.getElementById(`disponivel-${id}`).value === "true",
+              imagem: document.getElementById(`imagem-${id}`).value.trim(),
+              descricao: document.getElementById(`descricao-${id}`).value.trim()
+            });
+            alert("Produto atualizado.");
+          });
+        });
+
+        document.querySelectorAll("[data-delete]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            if (confirm("Excluir produto?")) {
+              await deleteDoc(doc(db, "produtos", btn.dataset.delete));
+            }
+          });
+        });
+      });
+    }
+
+    document.getElementById("btnAdicionar").addEventListener("click", async () => {
+      const nome = document.getElementById("novoNome").value.trim();
+      const categoria = document.getElementById("novaCategoria").value.trim();
+      const preco = Number(document.getElementById("novoPreco").value || 0);
+
+      if (!nome || !categoria || !preco) {
+        alert("Preencha nome, categoria e preço.");
+        return;
+      }
+
+      await addDoc(collection(db, "produtos"), {
+        nome,
+        categoria,
+        preco,
+        precoPromocional: Number(document.getElementById("novoPrecoPromo").value || 0),
+        promocaoAtiva: document.getElementById("novaPromoAtiva").value === "true",
+        disponivel: document.getElementById("novoDisponivel").value === "true",
+        imagem: document.getElementById("novaImagem").value.trim(),
+        descricao: document.getElementById("novaDescricao").value.trim()
+      });
+
+      [
+        "novoNome","novaCategoria","novoPreco","novoPrecoPromo","novaImagem","novaDescricao"
+      ].forEach(id => document.getElementById(id).value = "");
+
+      document.getElementById("novaPromoAtiva").value = "false";
+      document.getElementById("novoDisponivel").value = "true";
+      alert("Produto adicionado.");
+    });
+
+    document.getElementById("btnRecarregar").addEventListener("click", () => location.reload());
+
+    carregarConfig();
+    ouvirPedidos();
+    ouvirProdutos();
+  </script>
+</body>
+</html>
