@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cardápio Digital</title>
+  <style>
+    :root{
+      --bg:#121212; --card:#1e1e1e; --gold:#d4af37; --text:#fff; --muted:#bdbdbd;
+      --green:#25d366; --line:#2d2d2d; --danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);padding-bottom:160px}
+    header{padding:20px;text-align:center;background:#181818;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    h1{margin:0;color:var(--gold)}
+    .sub{color:var(--muted);margin-top:6px}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .mesa-box,.categoria,.carrinho{background:var(--card);border:1px solid var(--line);border-radius:14px}
+    .mesa-box{padding:14px;margin-bottom:16px}
+    .mesa-box label{display:block;margin-bottom:8px;color:var(--gold);font-weight:700}
+    .mesa-box input{width:100%;padding:12px;border-radius:10px;border:1px solid #444;background:#111;color:#fff}
+    .categoria{padding:16px;margin-bottom:16px}
+    .categoria h2{margin:0 0 14px;color:var(--gold);border-left:4px solid var(--gold);padding-left:10px}
+    .produtos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+    .produto{background:#171717;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    .img{height:120px;background:#222 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#777;font-size:14px}
+    .body{padding:12px}
+    .body h3{margin:0 0 8px}
+    .body p{margin:0 0 10px;color:var(--muted);font-size:.92rem;line-height:1.4}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .price{font-weight:700;color:var(--gold)}
+    .old{font-size:.85rem;color:#999;text-decoration:line-through;margin-right:6px}
+    .tag{display:inline-block;background:var(--danger);padding:4px 8px;border-radius:999px;font-size:.75rem;font-weight:700;margin-bottom:8px}
+    .btn{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+    .btn-add{background:var(--gold);color:#111}
+    .btn-disabled{background:#444;color:#999;cursor:not-allowed}
+    .footer-cart{position:fixed;left:0;right:0;bottom:0;background:#181818;border-top:2px solid var(--gold);padding:14px;z-index:20}
+    .cart-inner{max-width:980px;margin:0 auto}
+    .cart-title{color:var(--gold);font-weight:700;margin-bottom:8px}
+    .cart-list{max-height:110px;overflow:auto;color:#eee;font-size:.92rem;line-height:1.5;margin-bottom:10px}
+    .total{font-weight:700;margin-bottom:10px}
+    textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #444;background:#111;color:#fff;margin-bottom:10px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .btn-sec{background:#2f3540;color:#fff}
+    .btn-main{background:var(--green);color:#fff;width:100%;margin-top:10px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="nomeRestaurante">Carregando...</h1>
+    <div class="sub">Cardápio digital</div>
+  </header>
+
+  <div class="wrap">
+    <div class="mesa-box">
+      <label for="mesa">Número da mesa</label>
+      <input id="mesa" type="text" placeholder="Ex: 7" />
+    </div>
+
+    <div id="cardapio"></div>
+  </div>
+
+  <div class="footer-cart">
+    <div class="cart-inner">
+      <div class="cart-title">Seu pedido</div>
+      <div id="listaPedido" class="cart-list">Nenhum item adicionado.</div>
+      <div id="totalPedido" class="total">Total: R$ 0,00</div>
+      <textarea id="observacao" rows="2" placeholder="Observação do pedido"></textarea>
+      <div class="grid2">
+        <button class="btn btn-sec" onclick="limparPedido()">Limpar</button>
+        <button class="btn btn-sec" onclick="salvarMesa()">Salvar mesa</button>
+      </div>
+      <button class="btn btn-main" onclick="enviarPedido()">Enviar pedido</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, addDoc, query, orderBy, doc, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCOMS_DP1TEsoHQKEI44sM0jsj-7EBms84",
+      authDomain: "restaurante-felipe.firebaseapp.com",
+      projectId: "restaurante-felipe",
+      storageBucket: "restaurante-felipe.firebasestorage.app",
+      messagingSenderId: "917737239535",
+      appId: "1:917737239535:web:decb1cef3b7bd84183fc1a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let pedido = [];
+    let produtosCache = [];
+
+    const nomeRestaurante = document.getElementById("nomeRestaurante");
+    const cardapio = document.getElementById("cardapio");
+    const mesaInput = document.getElementById("mesa");
+    const listaPedido = document.getElementById("listaPedido");
+    const totalPedido = document.getElementById("totalPedido");
+    const observacao = document.getElementById("observacao");
+
+    function formatar(valor){
+      return Number(valor).toFixed(2).replace(".", ",");
+    }
+
+    function getMesaUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("mesa") || "";
+    }
+
+    async function carregarConfig() {
+      const ref = doc(db, "config", "restaurante");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        nomeRestaurante.textContent = data.nome || "Restaurante";
+      }
+    }
+
+    async function carregarCategorias() {
+      const q = query(collection(db, "categorias"), orderBy("ordem"));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function carregarProdutos() {
+      const snap = await getDocs(collection(db, "produtos"));
+      produtosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return produtosCache.filter(p => p.disponivel !== false);
+    }
+
+    function renderCategorias(categorias, produtos) {
+      cardapio.innerHTML = "";
+
+      categorias.forEach(cat => {
+        const itens = produtos.filter(p => p.categoria === cat.nome);
+        if (!itens.length) return;
+
+        const sec = document.createElement("section");
+        sec.className = "categoria";
+
+        sec.innerHTML = `
+          <h2>${cat.nome}</h2>
+          <div class="produtos">
+            ${itens.map(p => {
+              const precoFinal = p.promocaoAtiva ? p.precoPromocional : p.preco;
+              const imagemStyle = p.imagem ? `style="background-image:url('${p.imagem}')"` : "";
+              return `
+                <div class="produto">
+                  <div class="img" ${imagemStyle}>${p.imagem ? "" : "Sem imagem"}</div>
+                  <div class="body">
+                    ${p.promocaoAtiva ? `<div class="tag">Promoção</div>` : ""}
+                    <h3>${p.nome}</h3>
+                    <p>${p.descricao || ""}</p>
+                    <div class="row">
+                      <div class="price">
+                        ${p.promocaoAtiva ? `<span class="old">R$ ${formatar(p.preco)}</span>` : ""}
+                        R$ ${formatar(precoFinal)}
+                      </div>
+                      <button class="btn btn-add" data-id="${p.id}">Adicionar</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+
+        cardapio.appendChild(sec);
+      });
+
+      document.querySelectorAll(".btn-add").forEach(btn => {
+        btn.addEventListener("click", () => adicionarItem(btn.dataset.id));
+      });
+    }
+
+    function adicionarItem(id) {
+      const p = produtosCache.find(x => x.id === id);
+      if (!p) return;
+      const preco = p.promocaoAtiva ? p.precoPromocional : p.preco;
+      pedido.push({ produtoId: p.id, nome: p.nome, preco: Number(preco), qtd: 1 });
+      atualizarPedido();
+    }
+
+    function atualizarPedido() {
+      if (!pedido.length) {
+        listaPedido.innerHTML = "Nenhum item adicionado.";
+        totalPedido.textContent = "Total: R$ 0,00";
+        return;
+      }
+
+      listaPedido.innerHTML = pedido.map((item, i) =>
+        `${i + 1}. ${item.nome} - R$ ${formatar(item.preco)}`
+      ).join("<br>");
+
+      const total = pedido.reduce((acc, item) => acc + item.preco, 0);
+      totalPedido.textContent = `Total: R$ ${formatar(total)}`;
+    }
+
+    window.limparPedido = function() {
+      pedido = [];
+      observacao.value = "";
+      atualizarPedido();
+    }
+
+    window.salvarMesa = function() {
+      localStorage.setItem("mesa_atual", mesaInput.value.trim());
+      alert("Mesa salva.");
+    }
+
+    window.enviarPedido = async function() {
+      const mesa = mesaInput.value.trim();
+      if (!mesa) return alert("Informe a mesa.");
+      if (!pedido.length) return alert("Adicione itens ao pedido.");
+
+      const total = pedido.reduce((acc, item) => acc + item.preco, 0);
+
+      await addDoc(collection(db, "pedidos"), {
+        mesa,
+        itens: pedido,
+        total,
+        observacao: observacao.value.trim(),
+        status: "novo",
+        horario: serverTimestamp(),
+        origem: "qr"
+      });
+
+      alert("Pedido enviado com sucesso!");
+      pedido = [];
+      observacao.value = "";
+      atualizarPedido();
+    }
+
+    async function iniciar() {
+      mesaInput.value = getMesaUrl() || localStorage.getItem("mesa_atual") || "";
+      await carregarConfig();
+      const categorias = await carregarCategorias();
+      const produtos = await carregarProdutos();
+      renderCategorias(categorias, produtos);
+      atualizarPedido();
+    }
+
+    iniciar();
+  </script>
+</body>
+  </html>
