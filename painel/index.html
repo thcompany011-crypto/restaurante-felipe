@@ -6,90 +6,381 @@
   <title>Painel do Restaurante</title>
   <style>
     :root{
-      --bg:#121212; --card:#1e1e1e; --gold:#d4af37; --text:#fff; --muted:#bdbdbd;
-      --line:#2d2d2d; --green:#16a34a; --red:#ef4444; --blue:#2563eb;
+      --bg:#121212;
+      --card:#1e1e1e;
+      --gold:#d4af37;
+      --text:#ffffff;
+      --muted:#bdbdbd;
+      --line:#2d2d2d;
+      --green:#16a34a;
+      --red:#ef4444;
+      --blue:#2563eb;
+      --dark:#2f3540;
     }
+
     *{box-sizing:border-box}
-    body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
-    header{padding:20px;background:#181818;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
-    h1{margin:0;color:var(--gold)}
-    .sub{margin-top:6px;color:var(--muted)}
-    .wrap{max-width:1100px;margin:0 auto;padding:16px}
-    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-    .tab{padding:10px 14px;border:none;border-radius:10px;background:#2f3540;color:#fff;font-weight:700;cursor:pointer}
-    .tab.active{background:var(--gold);color:#111}
-    .panel{display:none}
-    .panel.active{display:block}
-    .grid{display:grid;gap:14px}
-    .pedido,.box,.produto{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
-    .pedido h3,.box h2,.produto h3{margin:0 0 10px;color:var(--gold)}
-    .status{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.75rem;font-weight:700;text-transform:uppercase;margin-bottom:10px}
+    body{
+      margin:0;
+      font-family:'Segoe UI', Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px;
+      background:#181818;
+      border-bottom:1px solid var(--line);
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+
+    .header-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .menu-btn{
+      width:42px;
+      height:42px;
+      border:none;
+      border-radius:10px;
+      background:#2a2a2a;
+      color:#fff;
+      font-size:20px;
+      cursor:pointer;
+    }
+
+    .title-wrap h1{
+      margin:0;
+      color:var(--gold);
+      font-size:1.5rem;
+    }
+
+    .title-wrap p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .wrap{
+      max-width:1250px;
+      margin:0 auto;
+      padding:16px;
+    }
+
+    .drawer{
+      position:fixed;
+      top:0;
+      left:-290px;
+      width:270px;
+      height:100vh;
+      background:#171717;
+      border-right:1px solid var(--line);
+      z-index:50;
+      transition:.25s ease;
+      padding:18px 14px;
+      overflow-y:auto;
+    }
+
+    .drawer.open{ left:0; }
+
+    .drawer h2{
+      color:var(--gold);
+      margin:0 0 18px;
+      font-size:1.2rem;
+    }
+
+    .drawer button{
+      width:100%;
+      border:none;
+      border-radius:10px;
+      padding:12px;
+      margin-bottom:10px;
+      font-weight:700;
+      cursor:pointer;
+      background:#2f3540;
+      color:#fff;
+      text-align:left;
+    }
+
+    .drawer button.active{
+      background:var(--gold);
+      color:#111;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      z-index:40;
+      display:none;
+    }
+
+    .overlay.show{ display:block; }
+
+    .panel{ display:none; }
+    .panel.active{ display:block; }
+
+    .section-title{
+      margin:0 0 14px;
+      color:var(--gold);
+      font-size:1.2rem;
+    }
+
+    .pedido-colunas{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+      gap:16px;
+    }
+
+    .coluna, .box, .pedido, .receber-card, .caixa-card, .fechamento-card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+    }
+
+    .coluna{
+      padding:14px;
+      min-height:220px;
+    }
+
+    .coluna h3{
+      margin:0 0 12px;
+      font-size:1rem;
+      color:var(--gold);
+      border-left:4px solid var(--gold);
+      padding-left:10px;
+    }
+
+    .lista-pedidos, .lista-receber, .lista-fechamentos{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .pedido, .receber-card, .fechamento-card{
+      padding:12px;
+    }
+
+    .pedido h4, .receber-card h4, .caixa-card h4, .fechamento-card h4{
+      margin:0 0 8px;
+      color:var(--gold);
+      font-size:1rem;
+    }
+
+    .status{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:.75rem;
+      font-weight:700;
+      text-transform:uppercase;
+      margin-bottom:10px;
+    }
+
     .novo{background:#6a5200;color:#fff1b0}
     .preparo{background:#0c4a6e;color:#d5f3ff}
     .pronto{background:#14532d;color:#d9ffe6}
     .entregue{background:#444;color:#eee}
-    .itens{background:#171717;border:1px solid var(--line);padding:10px;border-radius:10px;line-height:1.5;margin:10px 0}
-    .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-    input, textarea, select{width:100%;padding:10px;border-radius:10px;border:1px solid #444;background:#111;color:#fff}
-    .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-    .btn{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
-    .btn-save{background:var(--green);color:#fff}
-    .btn-remove{background:var(--red);color:#fff}
+
+    .info{
+      font-size:.92rem;
+      line-height:1.5;
+      margin-bottom:8px;
+      color:#f1f1f1;
+    }
+
+    .itens{
+      background:#101010;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      line-height:1.5;
+      margin:10px 0;
+      color:#e8e8e8;
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .btn{
+      border:none;
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
     .btn-blue{background:var(--blue);color:#fff}
-    .btn-dark{background:#2f3540;color:#fff}
-    .produto-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+    .btn-save{background:var(--green);color:#fff}
+    .btn-dark{background:var(--dark);color:#fff}
+    .btn-remove{background:var(--red);color:#fff}
+
+    .receber-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:14px;
+    }
+
+    .pagamento-box{
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid var(--line);
+    }
+
+    select, input{
+      width:100%;
+      padding:10px;
+      border-radius:10px;
+      border:1px solid #444;
+      background:#111;
+      color:#fff;
+      outline:none;
+      margin-top:8px;
+    }
+
+    .caixa-resumo{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .caixa-card{
+      padding:16px;
+    }
+
+    .caixa-numero{
+      font-size:1.5rem;
+      font-weight:700;
+      color:#fff;
+    }
+
+    .box{
+      padding:16px;
+      margin-top:16px;
+    }
+
+    .vazio{
+      color:#888;
+      font-size:.92rem;
+    }
   </style>
 </head>
 <body>
+
+  <div id="overlay" class="overlay"></div>
+
+  <aside id="drawer" class="drawer">
+    <h2>Menu do Painel</h2>
+    <button class="menu-item active" data-tab="pedidos">Pedidos</button>
+    <button class="menu-item" data-tab="receber">A Receber</button>
+    <button class="menu-item" data-tab="caixa">Caixa</button>
+  </aside>
+
   <header>
-    <h1 id="tituloRestaurante">Painel do Restaurante</h1>
-    <div class="sub">Pedidos em tempo real e gestão do cardápio</div>
+    <div class="header-left">
+      <button id="menuBtn" class="menu-btn">☰</button>
+      <div class="title-wrap">
+        <h1 id="tituloRestaurante">Painel do Restaurante</h1>
+        <p>Gestão de pedidos, recebimentos e caixa</p>
+      </div>
+    </div>
   </header>
 
   <div class="wrap">
-    <div class="tabs">
-      <button class="tab active" data-tab="pedidos">Pedidos</button>
-      <button class="tab" data-tab="produtos">Produtos</button>
-    </div>
 
     <section id="pedidos" class="panel active">
-      <div id="listaPedidos" class="grid"></div>
+      <h2 class="section-title">Pedidos</h2>
+
+      <div class="pedido-colunas">
+        <div class="coluna">
+          <h3>Novos</h3>
+          <div id="listaNovos" class="lista-pedidos"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Em preparo</h3>
+          <div id="listaPreparo" class="lista-pedidos"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Prontos</h3>
+          <div id="listaProntos" class="lista-pedidos"></div>
+        </div>
+
+        <div class="coluna">
+          <h3>Entregues</h3>
+          <div id="listaEntregues" class="lista-pedidos"></div>
+        </div>
+      </div>
     </section>
 
-    <section id="produtos" class="panel">
-      <div class="box">
-        <h2>Novo produto</h2>
-        <div class="row">
-          <input id="novoNome" placeholder="Nome do produto">
-          <input id="novaCategoria" placeholder="Categoria">
-          <input id="novoPreco" type="number" step="0.01" placeholder="Preço normal">
-          <input id="novoPrecoPromo" type="number" step="0.01" placeholder="Preço promocional">
-          <select id="novaPromoAtiva">
-            <option value="false">Sem promoção</option>
-            <option value="true">Promoção ativa</option>
-          </select>
-          <select id="novoDisponivel">
-            <option value="true">Disponível</option>
-            <option value="false">Indisponível</option>
-          </select>
-          <input id="novaImagem" placeholder="URL da imagem">
-          <input id="novaDescricao" placeholder="Descrição">
+    <section id="receber" class="panel">
+      <h2 class="section-title">A Receber</h2>
+      <div id="listaReceber" class="receber-grid"></div>
+    </section>
+
+    <section id="caixa" class="panel">
+      <h2 class="section-title">Caixa</h2>
+
+      <div class="caixa-resumo">
+        <div class="caixa-card">
+          <h4>Pix</h4>
+          <div id="totalPix" class="caixa-numero">R$ 0,00</div>
         </div>
-        <div class="actions">
-          <button class="btn btn-save" id="btnAdicionar">Adicionar produto</button>
-          <button class="btn btn-dark" id="btnRecarregar">Recarregar</button>
+
+        <div class="caixa-card">
+          <h4>Cartão</h4>
+          <div id="totalCartao" class="caixa-numero">R$ 0,00</div>
+        </div>
+
+        <div class="caixa-card">
+          <h4>Dinheiro</h4>
+          <div id="totalDinheiro" class="caixa-numero">R$ 0,00</div>
+        </div>
+
+        <div class="caixa-card">
+          <h4>Total do dia</h4>
+          <div id="totalGeral" class="caixa-numero">R$ 0,00</div>
         </div>
       </div>
 
-      <div id="listaProdutos" class="produto-list" style="margin-top:14px;"></div>
+      <div class="box">
+        <h4 style="margin:0 0 12px;color:var(--gold);">Fechamento de caixa</h4>
+        <button id="btnFecharCaixa" class="btn btn-save">Fechar caixa do dia</button>
+      </div>
+
+      <div class="box">
+        <h4 style="margin:0 0 12px;color:var(--gold);">Histórico de fechamentos</h4>
+        <div id="listaFechamentos" class="lista-fechamentos"></div>
+      </div>
     </section>
+
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import {
-      getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc,
-      addDoc, getDoc
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      updateDoc,
+      deleteDoc,
+      addDoc,
+      getDoc,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -104,26 +395,67 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const drawer = document.getElementById("drawer");
+    const overlay = document.getElementById("overlay");
+    const menuBtn = document.getElementById("menuBtn");
     const tituloRestaurante = document.getElementById("tituloRestaurante");
-    const listaPedidos = document.getElementById("listaPedidos");
-    const listaProdutos = document.getElementById("listaProdutos");
 
-    document.querySelectorAll(".tab").forEach(btn => {
+    const listaNovos = document.getElementById("listaNovos");
+    const listaPreparo = document.getElementById("listaPreparo");
+    const listaProntos = document.getElementById("listaProntos");
+    const listaEntregues = document.getElementById("listaEntregues");
+
+    const listaReceber = document.getElementById("listaReceber");
+
+    const totalPix = document.getElementById("totalPix");
+    const totalCartao = document.getElementById("totalCartao");
+    const totalDinheiro = document.getElementById("totalDinheiro");
+    const totalGeral = document.getElementById("totalGeral");
+    const listaFechamentos = document.getElementById("listaFechamentos");
+    const btnFecharCaixa = document.getElementById("btnFecharCaixa");
+
+    let vendasCaixa = [];
+    let fechamentos = [];
+
+    function abrirMenu() {
+      drawer.classList.add("open");
+      overlay.classList.add("show");
+    }
+
+    function fecharMenu() {
+      drawer.classList.remove("open");
+      overlay.classList.remove("show");
+    }
+
+    menuBtn.addEventListener("click", abrirMenu);
+    overlay.addEventListener("click", fecharMenu);
+
+    document.querySelectorAll(".menu-item").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
         document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+
         btn.classList.add("active");
         document.getElementById(btn.dataset.tab).classList.add("active");
+        fecharMenu();
       });
     });
 
     function formatar(valor){
-      return Number(valor).toFixed(2).replace(".", ",");
+      return Number(valor || 0).toFixed(2).replace(".", ",");
     }
 
     function formatarData(ts){
       if (!ts?.seconds) return "Agora";
       return new Date(ts.seconds * 1000).toLocaleString("pt-BR");
+    }
+
+    function hojeISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
     }
 
     async function carregarConfig() {
@@ -140,41 +472,90 @@
              status === "pronto" ? "pronto" : "entregue";
     }
 
+    function montarPedidoHTML(p) {
+      return `
+        <div class="pedido">
+          <h4>Mesa ${p.mesa}</h4>
+          <div class="status ${classeStatus(p.status)}">${p.status}</div>
+
+          <div class="info">
+            <strong>Horário:</strong> ${formatarData(p.horario)}<br>
+            <strong>Total:</strong> R$ ${formatar(p.total)}<br>
+            <strong>Observação:</strong> ${p.observacao || "Sem observação"}
+          </div>
+
+          <div class="itens">
+            ${(p.itens || []).map(i => `• ${i.nome} - R$ ${formatar(i.preco)}`).join("<br>")}
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-blue" data-status="preparo" data-id="${p.id}">Em preparo</button>
+            <button class="btn btn-save" data-status="pronto" data-id="${p.id}">Pronto</button>
+            <button class="btn btn-dark" data-status="entregue" data-id="${p.id}">Entregue</button>
+            <button class="btn btn-remove" data-remove="${p.id}">Remover</button>
+          </div>
+        </div>
+      `;
+    }
+
     function ouvirPedidos(){
       onSnapshot(collection(db, "pedidos"), snapshot => {
         const pedidos = [];
         snapshot.forEach(d => pedidos.push({ id: d.id, ...d.data() }));
 
+        // antigos em cima, novos embaixo
         pedidos.sort((a,b) => {
           const aTime = a.horario?.seconds || 0;
           const bTime = b.horario?.seconds || 0;
-          return bTime - aTime;
+          return aTime - bTime;
         });
 
-        listaPedidos.innerHTML = !pedidos.length
-          ? `<div class="pedido">Nenhum pedido ainda.</div>`
-          : pedidos.map(p => `
-            <div class="pedido">
-              <h3>Mesa ${p.mesa}</h3>
-              <div class="status ${classeStatus(p.status)}">${p.status}</div>
-              <div><strong>Horário:</strong> ${formatarData(p.horario)}</div>
-              <div><strong>Total:</strong> R$ ${formatar(p.total || 0)}</div>
-              <div><strong>Observação:</strong> ${p.observacao || "Sem observação"}</div>
-              <div class="itens">
-                ${(p.itens || []).map(i => `• ${i.nome} - R$ ${formatar(i.preco)}`).join("<br>")}
-              </div>
+        const novos = pedidos.filter(p => p.status === "novo");
+        const preparo = pedidos.filter(p => p.status === "preparo");
+        const prontos = pedidos.filter(p => p.status === "pronto");
+        const entregues = pedidos.filter(p => p.status === "entregue");
+
+        listaNovos.innerHTML = novos.length ? novos.map(montarPedidoHTML).join("") : `<div class="vazio">Nenhum pedido novo.</div>`;
+        listaPreparo.innerHTML = preparo.length ? preparo.map(montarPedidoHTML).join("") : `<div class="vazio">Nenhum pedido em preparo.</div>`;
+        listaProntos.innerHTML = prontos.length ? prontos.map(montarPedidoHTML).join("") : `<div class="vazio">Nenhum pedido pronto.</div>`;
+        listaEntregues.innerHTML = entregues.length ? entregues.map(montarPedidoHTML).join("") : `<div class="vazio">Nenhum pedido entregue.</div>`;
+
+        // a receber = entregues e ainda não recebidos
+        const aReceber = pedidos.filter(p => p.status === "entregue" && p.recebido !== true);
+
+        listaReceber.innerHTML = aReceber.length ? aReceber.map(p => `
+          <div class="receber-card">
+            <h4>Mesa ${p.mesa}</h4>
+
+            <div class="info">
+              <strong>Horário:</strong> ${formatarData(p.horario)}<br>
+              <strong>Total:</strong> R$ ${formatar(p.total)}
+            </div>
+
+            <div class="itens">
+              ${(p.itens || []).map(i => `• ${i.nome} - R$ ${formatar(i.preco)}`).join("<br>")}
+            </div>
+
+            <div class="pagamento-box">
+              <label>Forma de pagamento</label>
+              <select id="pagamento-${p.id}">
+                <option value="pix">Pix</option>
+                <option value="cartao">Cartão</option>
+                <option value="dinheiro">Dinheiro</option>
+              </select>
+
               <div class="actions">
-                <button class="btn btn-blue" data-status="preparo" data-id="${p.id}">Em preparo</button>
-                <button class="btn btn-save" data-status="pronto" data-id="${p.id}">Pronto</button>
-                <button class="btn btn-dark" data-status="entregue" data-id="${p.id}">Entregue</button>
-                <button class="btn btn-remove" data-remove="${p.id}">Remover</button>
+                <button class="btn btn-save" data-receber="${p.id}">Concluir venda</button>
               </div>
             </div>
-          `).join("");
+          </div>
+        `).join("") : `<div class="vazio">Nenhum valor a receber.</div>`;
 
         document.querySelectorAll("[data-status]").forEach(btn => {
           btn.addEventListener("click", async () => {
-            await updateDoc(doc(db, "pedidos", btn.dataset.id), { status: btn.dataset.status });
+            await updateDoc(doc(db, "pedidos", btn.dataset.id), {
+              status: btn.dataset.status
+            });
           });
         });
 
@@ -185,104 +566,120 @@
             }
           });
         });
-      });
-    }
 
-    function ouvirProdutos(){
-      onSnapshot(collection(db, "produtos"), snapshot => {
-        const produtos = [];
-        snapshot.forEach(d => produtos.push({ id: d.id, ...d.data() }));
-
-        listaProdutos.innerHTML = !produtos.length
-          ? `<div class="produto">Nenhum produto cadastrado.</div>`
-          : produtos.map(p => `
-            <div class="produto">
-              <h3>${p.nome}</h3>
-              <div class="row">
-                <input id="nome-${p.id}" value="${p.nome || ""}">
-                <input id="categoria-${p.id}" value="${p.categoria || ""}">
-                <input id="preco-${p.id}" type="number" step="0.01" value="${p.preco ?? 0}">
-                <input id="promo-${p.id}" type="number" step="0.01" value="${p.precoPromocional ?? 0}">
-                <select id="promoAtiva-${p.id}">
-                  <option value="false" ${!p.promocaoAtiva ? "selected" : ""}>Sem promoção</option>
-                  <option value="true" ${p.promocaoAtiva ? "selected" : ""}>Promoção ativa</option>
-                </select>
-                <select id="disponivel-${p.id}">
-                  <option value="true" ${p.disponivel !== false ? "selected" : ""}>Disponível</option>
-                  <option value="false" ${p.disponivel === false ? "selected" : ""}>Indisponível</option>
-                </select>
-                <input id="imagem-${p.id}" value="${p.imagem || ""}" placeholder="URL da imagem">
-                <input id="descricao-${p.id}" value="${p.descricao || ""}" placeholder="Descrição">
-              </div>
-              <div class="actions">
-                <button class="btn btn-save" data-save="${p.id}">Salvar</button>
-                <button class="btn btn-remove" data-delete="${p.id}">Excluir</button>
-              </div>
-            </div>
-          `).join("");
-
-        document.querySelectorAll("[data-save]").forEach(btn => {
+        document.querySelectorAll("[data-receber]").forEach(btn => {
           btn.addEventListener("click", async () => {
-            const id = btn.dataset.save;
-            await updateDoc(doc(db, "produtos", id), {
-              nome: document.getElementById(`nome-${id}`).value.trim(),
-              categoria: document.getElementById(`categoria-${id}`).value.trim(),
-              preco: Number(document.getElementById(`preco-${id}`).value || 0),
-              precoPromocional: Number(document.getElementById(`promo-${id}`).value || 0),
-              promocaoAtiva: document.getElementById(`promoAtiva-${id}`).value === "true",
-              disponivel: document.getElementById(`disponivel-${id}`).value === "true",
-              imagem: document.getElementById(`imagem-${id}`).value.trim(),
-              descricao: document.getElementById(`descricao-${id}`).value.trim()
+            const pedidoId = btn.dataset.receber;
+            const pedido = pedidos.find(p => p.id === pedidoId);
+            if (!pedido) return;
+
+            const formaPagamento = document.getElementById(`pagamento-${pedidoId}`).value;
+
+            await updateDoc(doc(db, "pedidos", pedidoId), {
+              recebido: true,
+              formaPagamento,
+              dataRecebimento: serverTimestamp()
             });
-            alert("Produto atualizado.");
-          });
-        });
 
-        document.querySelectorAll("[data-delete]").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            if (confirm("Excluir produto?")) {
-              await deleteDoc(doc(db, "produtos", btn.dataset.delete));
-            }
+            await addDoc(collection(db, "caixa"), {
+              pedidoId: pedido.id,
+              mesa: pedido.mesa,
+              itens: pedido.itens || [],
+              total: pedido.total || 0,
+              formaPagamento,
+              dataRecebimento: serverTimestamp(),
+              dia: hojeISO(),
+              concluidoNoFechamento: false
+            });
+
+            alert("Venda concluída com sucesso.");
           });
         });
       });
     }
 
-    document.getElementById("btnAdicionar").addEventListener("click", async () => {
-      const nome = document.getElementById("novoNome").value.trim();
-      const categoria = document.getElementById("novaCategoria").value.trim();
-      const preco = Number(document.getElementById("novoPreco").value || 0);
+    function ouvirCaixa(){
+      onSnapshot(collection(db, "caixa"), snapshot => {
+        const vendas = [];
+        snapshot.forEach(d => vendas.push({ id: d.id, ...d.data() }));
 
-      if (!nome || !categoria || !preco) {
-        alert("Preencha nome, categoria e preço.");
+        vendasCaixa = vendas.filter(v => v.dia === hojeISO() && v.concluidoNoFechamento !== true);
+
+        const pix = vendasCaixa.filter(v => v.formaPagamento === "pix").reduce((a,b) => a + Number(b.total || 0), 0);
+        const cartao = vendasCaixa.filter(v => v.formaPagamento === "cartao").reduce((a,b) => a + Number(b.total || 0), 0);
+        const dinheiro = vendasCaixa.filter(v => v.formaPagamento === "dinheiro").reduce((a,b) => a + Number(b.total || 0), 0);
+        const geral = pix + cartao + dinheiro;
+
+        totalPix.textContent = `R$ ${formatar(pix)}`;
+        totalCartao.textContent = `R$ ${formatar(cartao)}`;
+        totalDinheiro.textContent = `R$ ${formatar(dinheiro)}`;
+        totalGeral.textContent = `R$ ${formatar(geral)}`;
+      });
+    }
+
+    function ouvirFechamentos(){
+      onSnapshot(collection(db, "fechamentos_caixa"), snapshot => {
+        const lista = [];
+        snapshot.forEach(d => lista.push({ id: d.id, ...d.data() }));
+
+        lista.sort((a,b) => {
+          const aTime = a.horarioFechamento?.seconds || 0;
+          const bTime = b.horarioFechamento?.seconds || 0;
+          return bTime - aTime;
+        });
+
+        fechamentos = lista;
+
+        listaFechamentos.innerHTML = fechamentos.length ? fechamentos.map(f => `
+          <div class="fechamento-card">
+            <h4>Fechamento - ${f.dia || "-"}</h4>
+            <div class="info">
+              <strong>Pix:</strong> R$ ${formatar(f.totalPix)}<br>
+              <strong>Cartão:</strong> R$ ${formatar(f.totalCartao)}<br>
+              <strong>Dinheiro:</strong> R$ ${formatar(f.totalDinheiro)}<br>
+              <strong>Total geral:</strong> R$ ${formatar(f.totalGeral)}<br>
+              <strong>Fechado em:</strong> ${formatarData(f.horarioFechamento)}
+            </div>
+          </div>
+        `).join("") : `<div class="vazio">Nenhum fechamento registrado.</div>`;
+      });
+    }
+
+    btnFecharCaixa.addEventListener("click", async () => {
+      if (!vendasCaixa.length) {
+        alert("Não há vendas em aberto para fechar hoje.");
         return;
       }
 
-      await addDoc(collection(db, "produtos"), {
-        nome,
-        categoria,
-        preco,
-        precoPromocional: Number(document.getElementById("novoPrecoPromo").value || 0),
-        promocaoAtiva: document.getElementById("novaPromoAtiva").value === "true",
-        disponivel: document.getElementById("novoDisponivel").value === "true",
-        imagem: document.getElementById("novaImagem").value.trim(),
-        descricao: document.getElementById("novaDescricao").value.trim()
+      if (!confirm("Deseja fechar o caixa do dia?")) return;
+
+      const pix = vendasCaixa.filter(v => v.formaPagamento === "pix").reduce((a,b) => a + Number(b.total || 0), 0);
+      const cartao = vendasCaixa.filter(v => v.formaPagamento === "cartao").reduce((a,b) => a + Number(b.total || 0), 0);
+      const dinheiro = vendasCaixa.filter(v => v.formaPagamento === "dinheiro").reduce((a,b) => a + Number(b.total || 0), 0);
+      const geral = pix + cartao + dinheiro;
+
+      await addDoc(collection(db, "fechamentos_caixa"), {
+        dia: hojeISO(),
+        totalPix: pix,
+        totalCartao: cartao,
+        totalDinheiro: dinheiro,
+        totalGeral: geral,
+        horarioFechamento: serverTimestamp()
       });
 
-      [
-        "novoNome","novaCategoria","novoPreco","novoPrecoPromo","novaImagem","novaDescricao"
-      ].forEach(id => document.getElementById(id).value = "");
+      for (const venda of vendasCaixa) {
+        await updateDoc(doc(db, "caixa", venda.id), {
+          concluidoNoFechamento: true
+        });
+      }
 
-      document.getElementById("novaPromoAtiva").value = "false";
-      document.getElementById("novoDisponivel").value = "true";
-      alert("Produto adicionado.");
+      alert("Caixa fechado com sucesso.");
     });
-
-    document.getElementById("btnRecarregar").addEventListener("click", () => location.reload());
 
     carregarConfig();
     ouvirPedidos();
-    ouvirProdutos();
+    ouvirCaixa();
+    ouvirFechamentos();
   </script>
 </body>
 </html>
